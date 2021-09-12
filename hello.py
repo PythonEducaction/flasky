@@ -1,11 +1,21 @@
-from flask import Flask, render_template, session, redirect, url_for
+from flask import Flask, render_template, session, redirect, url_for, flash
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.validators import DataRequired
 
+import os
+from flask_sqlalchemy import SQLAlchemy
+
+baseir = os.path.abspath(os.path.dirname(__file__))
+
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] =\
+    'sqlite:///' + os.path.join(baseir, 'data.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
 app.config['SECRET_KEY'] = 'hard to guess string'
 
 bootstrap = Bootstrap(app)
@@ -14,6 +24,25 @@ moment = Moment(app)
 class NameForm(FlaskForm):
     name = StringField('What is your name?', validators=[DataRequired()])
     submit = SubmitField('Submit')
+
+
+class Role(db.Model):
+    __tablename__ = 'roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    users = db.relathionship('User', backref='role')
+
+    def __repr__(self):
+        return '<Role %r>' % self.name
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, index=True)
+    role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
+
+    def __repr__(self):
+        return '<User %r>' % self.username
 
 
 @app.errorhandler(404)
@@ -28,8 +57,10 @@ def internal_server_error(e):
 def index():
     form = NameForm()
     if form.validate_on_submit():
+        old_name = session.get('name')
+        if old_name is not None and old_name != form.name.data:
+            flash('Looks like you have changed your name! ')
         session['name'] = form.name.data
-        form.name.data = ''
         return redirect(url_for('index'))
     return render_template('index.html', form=form, name=session.get('name'))
 
