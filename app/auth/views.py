@@ -1,25 +1,24 @@
 from flask import render_template, redirect, request, url_for, flash
-from flask_login import login_user, logout_user
-from flask_login.utils import login_required, logout_user
-from flask_wtf import form
+from flask_login import login_user, logout_user, login_required
 from . import auth
 from ..models import User
-from .forms import LoginFrom
+from .forms import LoginForm
 
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    form = LoginFrom()
+    form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).firts()
+        user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is not None and user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
             next = request.args.get('next')
             if next is None or not next.startswith('/'):
                 next = url_for('main.index')
             return redirect(next)
-        flash('Invalid  or password.')
+        flash('Invalid email or password.')
     return render_template('auth/login.html', form=form)
+
 
 @auth.route('/logout')
 @login_required
