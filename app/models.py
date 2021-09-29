@@ -3,6 +3,7 @@ from flask_login import UserMixin
 from . import db, login_manager
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from . import db
+from flask import Flask, current_app
 
 class Role(db.Model):
     __tablename__ = 'roles'

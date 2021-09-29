@@ -30,8 +30,17 @@ c = conn.cursor()
 # get tables name
 
 # conn.commit()
+
+# check tables
 c.execute("SELECT name FROM sqlite_master WHERE type='table';")
-c.execute("SELECT * FROM users;")
+
+# check data on table
+# c.execute("SELECT * FROM users;")
+
+# check columns
+c.execute("PRAGMA table_info(users);")
+
+
 print(c.fetchall())
 
 
