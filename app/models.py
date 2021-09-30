@@ -1,3 +1,4 @@
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
@@ -11,6 +12,7 @@ class Permission:
     WRITE = 4
     MODERATE = 8
     ADMIN = 16
+
 
 class Role(db.Model):
     __tablename__ = 'roles'
@@ -35,7 +37,6 @@ class Role(db.Model):
                               Permission.WRITE, Permission.MODERATE,
                               Permission.ADMIN],
         }
-
         default_role = 'User'
         for r in roles:
             role = Role.query.filter_by(name=r).first()
@@ -54,10 +55,10 @@ class Role(db.Model):
             self.permissions += perm
 
     def remove_permission(self, perm):
-        if not self.has_permission(perm):
+        if self.has_permission(perm):
             self.permissions -= perm
 
-    def reset_permissions(self, perm):
+    def reset_permissions(self):
         self.permissions = 0
 
     def has_permission(self, perm):
@@ -75,11 +76,16 @@ class User(UserMixin, db.Model):
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean, default=False)
+    name = db.Column(db.String(64))
+    location = db.Column(db.String(64))
+    about_me = db.Column(db.Text())
+    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
+    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
 
     def __init__(self, **kargs):
         super(User, self).__init__(**kargs)
         if self.role is None:
-            if self.email == current_app.config['FLASK_ADMIN']:
+            if self.email == current_app.config['FLASKY_ADMIN']:
                 self.role = Role.query.filter_by(name='Administrator').firts()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
@@ -120,6 +126,11 @@ class User(UserMixin, db.Model):
 
     def is_administrator(self):
         return self.can(Permission.ADMIN)
+
+    def ping(self):
+        self.last_seen = datetime.utcnow()
+        db.session.add(self)
+        db.session.commit()
 
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
