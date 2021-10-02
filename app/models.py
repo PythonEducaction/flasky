@@ -4,7 +4,8 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
 from flask_login import UserMixin, AnonymousUserMixin
 from . import db, login_manager
-
+import hashlib
+from flask import request
 
 class Permission:
     FOLLOW = 1
@@ -66,6 +67,8 @@ class Role(db.Model):
 
     def __repr__(self):
         return '<Role %r>' % self.name
+
+
 
 
 class User(UserMixin, db.Model):
@@ -131,6 +134,12 @@ class User(UserMixin, db.Model):
         self.last_seen = datetime.utcnow()
         db.session.add(self)
         db.session.commit()
+
+    def gravatar(self, size=100, default='identicon', rating='g'):
+        url = 'https://secure.gravatar.com/avatar'
+        hash = hashlib.md5(self.email.lower().encode('utf-8')).hexdigest()
+        return '{url}/{hash}?s={size}&{default}&r={rating}'.format(
+            url=url, hash=hash, size=size, default=default, rating=rating)
 
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
