@@ -1,48 +1,110 @@
 import sqlite3
 
-conn = sqlite3.connect('data-dev.sqlite')
-c = conn.cursor()
+class Db:
+    def __init__(self, db_name):
+        self.conn = sqlite3.connect('data-dev.sqlite')
+        # conn = sqlite3.connect('data-dev - Copy.sqlite')
+        self.c = self.conn.cursor()
 
-# c.execute("DROP TABLE IF EXISTS roles;")
-# c.execute("DROP TABLE IF EXISTS users;")
-# c.execute("""
-#     CREATE TABLE roles(
-#     id INTEGER PRIMARY KEY ,
-#     name TEXT NOT NULL
-#     );
+    def drop_table(self):
+        self.c.execute("DROP TABLE IF EXISTS roles;")
+        # c.execute("DROP TABLE IF EXISTS users;")
 
-#     CREATE TABLE users(
-#     id INTEGER PRIMARY KEY,
-#     email TEXT NOT NULL,
-#     username TEXT NOT NULL,
-#     role_id INTEGER,
-#     password_hash TEXT NOT NULL,
-#     FOREIGN KEY (role_id) REFERENCES roles (id));
-#     """)
-# c.execute("""
-#     CREATE TABLE users(
-#     id INTEGER PRIMARY KEY,
-#     email TEXT NOT NULL,
-#     role_id INTEGER NULL,
-#     username TEXT NOT NULL,
-#     password_hash TEXT NOT NULL
-#     )""")
-# get tables name
+    def create_multiple_table(self):
+        self.c.executescript("""
+            CREATE TABLE roles(
+            id INTEGER PRIMARY KEY ,
+            name TEXT NOT NULL
+            );
 
-# conn.commit()
+            CREATE TABLE users(
+            id INTEGER PRIMARY KEY,
+            email TEXT NOT NULL,
+            username TEXT NOT NULL,
+            role_id INTEGER,
+            password_hash TEXT NOT NULL,
+            FOREIGN KEY (role_id) REFERENCES roles (id));
+            """)
 
-# check tables
-# c.execute("SELECT name FROM sqlite_master WHERE type='table';")
+    def create_single_table(self):
+        # c.execute("""
+        #     CREATE TABLE users(
+        #     id INTEGER PRIMARY KEY,
+        #     email TEXT NOT NULL,
+        #     role_id INTEGER NULL,
+        #     username TEXT NOT NULL,
+        #     password_hash TEXT NOT NULL
+        #     )""")
 
-# check data on table
-c.execute("SELECT * FROM users;")
-# c.execute("SELECT * FROM roles;")
+        self.c.execute("""
+            CREATE TABLE roles(
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            "default" BOOLEAN DEFAULT False NOT NULL,
+            permissions INTEGER NULL
+            );""")
 
-# check columns
-# c.execute("PRAGMA table_info(users);")
-# c.execute("PRAGMA table_info(roles);")
+    def add_column(self, table_name):
+        self.c.executescript("""
+            ALTER TABLE {}
+            ADD COLUMN avatar_hash;
+            """.format(table_name))
 
-print(c.fetchall())
+    def add_column_boolean(self, table_name):
+        self.c.executescript("""
+            ALTER TABLE {}
+            ADD COLUMN "default" BOOLEAN
+            """.format(table_name))
 
 
-conn.close()
+
+    def  get_tables_name(self):
+        self.c.execute("SELECT name FROM sqlite_master WHERE type='table';")
+
+    def get_data_on_table(self, table_name):
+        self.c.execute(f"SELECT * FROM {table_name};")
+        # c.execute("SELECT * FROM roles;")
+
+    def get_columns_name_on_table(self, table_name):
+        self.c.execute(f"PRAGMA table_info({table_name});")
+
+
+    def commit(self):
+        self.conn.commit()
+
+
+    def all_result(self):
+        print(self.c.fetchall())
+
+    def close_connection(self):
+        self.conn.close()
+
+
+
+db_name = 'data-dev.sqlite'
+table_list = ('users', 'roles')
+table_name = table_list[1]
+my_db = Db(db_name)
+
+# my_db.drop_table()
+# get_data_on_table()
+
+# my_db.create_multiple_table()
+
+# my_db.get_tables_name()
+# my_db.all_result()
+
+# my_db.add_column()
+
+# my_db.add_column_boolean(table_name)
+
+# my_db.create_single_table()
+# my_db.commit()
+
+# my_db.get_data_on_table(table_name)
+# my_db.all_result()
+
+my_db.get_columns_name_on_table(table_name)
+my_db.all_result()
+
+my_db.close_connection()
