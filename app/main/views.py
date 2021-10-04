@@ -3,15 +3,23 @@ from flask.helpers import url_for
 from flask_login import login_required, current_user
 from werkzeug.utils import redirect
 from . import main
-from .forms import EditProfileAdminForm, EditProfileForm
-from ..models import User, Role
+from .forms import EditProfileAdminForm, EditProfileForm, PostForm
+from ..models import Permission, User, Role, Post
 from .. import db
 from ..decorators import admin_required
 
 
 @main.route('/')
 def index():
-    return render_template('index.html')
+    form = PostForm()
+    if current_user.can(Permission.WRITE) and form.validate_on_submit():
+        post = Post(body=form.body.data,
+                    autho=current_user._get_current_object())
+        db.session.add(post)
+        db.session.commit()
+        return redirect*url_for('.idex')
+    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    return render_template('index.html', form=form, posts=posts)
 
 @main.route('/user/<username>')
 def user(username):
