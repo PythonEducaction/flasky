@@ -1,12 +1,9 @@
 from flask import render_template, redirect, url_for, abort, flash
-# from flask import render_template, flash
-# from flask.helpers import url_for
 from flask_login import login_required, current_user
-# from werkzeug.utils import redirect
 from . import main
-from .forms import EditProfileAdminForm, EditProfileForm, PostForm
+from .forms import EditProfileForm, EditProfileAdminForm, PostForm
 from .. import db
-from ..models import Permission, User, Role, Post
+from ..models import Permission, Role, User, Post
 from ..decorators import admin_required
 
 
@@ -21,6 +18,7 @@ def index():
         return redirect(url_for('.index'))
     posts = Post.query.order_by(Post.timestamp.desc()).all()
     return render_template('index.html', form=form, posts=posts)
+
 
 @main.route('/user/<username>')
 def user(username):
@@ -46,11 +44,12 @@ def edit_profile():
     form.about_me.data = current_user.about_me
     return render_template('edit_profile.html', form=form)
 
+
 @main.route('/edit-profile/<int:id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def edit_profile_admin(id):
-    user = User.quey.get_or_404(id)
+    user = User.query.get_or_404(id)
     form = EditProfileAdminForm(user=user)
     if form.validate_on_submit():
         user.email = form.email.data
