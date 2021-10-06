@@ -82,7 +82,7 @@ class Db:
 
 
 db_name = 'data-dev.sqlite'
-table_list = ('users', 'roles')
+table_list = ('users', 'roles', 'posts')
 table_name = table_list[1]
 my_db = Db(db_name)
 

@@ -1,30 +1,33 @@
-from flask import render_template, flash
-from flask.helpers import url_for
+from flask import render_template, redirect, url_for, abort, flash
+# from flask import render_template, flash
+# from flask.helpers import url_for
 from flask_login import login_required, current_user
-from werkzeug.utils import redirect
+# from werkzeug.utils import redirect
 from . import main
 from .forms import EditProfileAdminForm, EditProfileForm, PostForm
-from ..models import Permission, User, Role, Post
 from .. import db
+from ..models import Permission, User, Role, Post
 from ..decorators import admin_required
 
 
-@main.route('/')
+@main.route('/', methods=['GET', 'POST'])
 def index():
     form = PostForm()
     if current_user.can(Permission.WRITE) and form.validate_on_submit():
         post = Post(body=form.body.data,
-                    autho=current_user._get_current_object())
+                    author=current_user._get_current_object())
         db.session.add(post)
         db.session.commit()
-        return redirect*url_for('.idex')
+        return redirect(url_for('.index'))
     posts = Post.query.order_by(Post.timestamp.desc()).all()
     return render_template('index.html', form=form, posts=posts)
 
 @main.route('/user/<username>')
 def user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    return render_template('user.html', user=user)
+    posts = user.posts.order_by(Post.timestamp.desc()).all()
+    return render_template('user.html', user=user, posts=posts)
+
 
 @main.route('/edit-profile', methods=['GET', 'POST'])
 @login_required
