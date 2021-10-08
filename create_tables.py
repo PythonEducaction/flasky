@@ -2,7 +2,7 @@ import sqlite3
 
 class Db:
     def __init__(self, db_name):
-        self.conn = sqlite3.connect('data-dev.sqlite')
+        self.conn = sqlite3.connect(db_name)
         # conn = sqlite3.connect('data-dev - Copy.sqlite')
         self.c = self.conn.cursor()
 
@@ -58,7 +58,7 @@ class Db:
 
 
 
-    def  get_tables_name(self):
+    def get_tables_name(self):
         self.c.execute("SELECT name FROM sqlite_master WHERE type='table';")
 
     def get_data_on_table(self, table_name):
@@ -68,6 +68,12 @@ class Db:
     def get_columns_name_on_table(self, table_name):
         self.c.execute(f"PRAGMA table_info({table_name});")
 
+    def update_value(self, table_name, column):
+        self.c.execute(
+            """
+            UPDATE employees
+            SET lastname = 'Smith'
+            WHERE employeeid = 3;""")
 
     def commit(self):
         self.conn.commit()
@@ -83,7 +89,7 @@ class Db:
 
 db_name = 'data-dev.sqlite'
 table_list = ('users', 'roles', 'posts')
-table_name = table_list[1]
+table_name = table_list[0]
 my_db = Db(db_name)
 
 # my_db.drop_table()
@@ -91,18 +97,18 @@ my_db = Db(db_name)
 
 # my_db.create_multiple_table()
 
-# my_db.get_tables_name()
-# my_db.all_result()
+my_db.get_tables_name()
+my_db.all_result()
 
 # my_db.add_column()
 
 # my_db.add_column_boolean(table_name)
 
 # my_db.create_single_table()
-# my_db.commit()
+# # my_db.commit()
 
-# my_db.get_data_on_table(table_name)
-# my_db.all_result()
+my_db.get_data_on_table(table_name)
+my_db.all_result()
 
 my_db.get_columns_name_on_table(table_name)
 my_db.all_result()
