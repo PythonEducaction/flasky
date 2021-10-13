@@ -1,13 +1,13 @@
 from datetime import datetime
-from sqlalchemy.orm import backref
+import hashlib
 from werkzeug.security import generate_password_hash, check_password_hash
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from markdown import markdown
+import bleach
 from flask import current_app, request
 from flask_login import UserMixin, AnonymousUserMixin
 from . import db, login_manager
-import hashlib
-from markdown import markdown
-import bleach
+
 
 class Permission:
     FOLLOW = 1
@@ -95,12 +95,12 @@ class User(UserMixin, db.Model):
     avatar_hash = db.Column(db.String(32))
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     followed = db.relationship('Follow',
-                               foreing_keys=[Follow.follower_id],
+                               foreign_keys=[Follow.follower_id],
                                backref=db.backref('follower', lazy='joined'),
                                lazy='dynamic',
                                cascade='all, delete-orphan')
     followers = db.relationship('Follow',
-                                foreing_key=[Follow.followed_id],
+                                foreign_keys=[Follow.followed_id],
                                 backref=db.backref('followed', lazy='joined'),
                                 lazy='dynamic',
                                 cascade='all, delete-orphan')
@@ -202,18 +202,15 @@ class User(UserMixin, db.Model):
         return '{url}/{hash}?s={size}&d={default}&r={rating}'.format(
             url=url, hash=hash, size=size, default=default, rating=rating)
 
-    def __repr__(self):
-        return '<User %r>' % self.username
-
     def follow(self, user):
         if not self.is_following(user):
-            f = Follow(follower=self, followed=user)
-            db.session.add(f)
+            f = Follow(followed=user)
+            self.followed.append(f)
 
     def unfollow(self, user):
         f = self.followed.filter_by(followed_id=user.id).first()
         if f:
-            db.session.delete(f)
+            self.followed.remove(f)
 
     def is_following(self, user):
         if user.id is None:
@@ -227,6 +224,9 @@ class User(UserMixin, db.Model):
         return self.followers.filter_by(
             follower_id=user.id).first() is not None
 
+    def __repr__(self):
+        return '<User %r>' % self.username
+
 
 class AnonymousUser(AnonymousUserMixin):
     def can(self, permissions):
@@ -236,6 +236,7 @@ class AnonymousUser(AnonymousUserMixin):
         return False
 
 login_manager.anonymous_user = AnonymousUser
+
 
 @login_manager.user_loader
 def load_user(user_id):
