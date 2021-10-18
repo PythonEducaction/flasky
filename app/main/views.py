@@ -1,6 +1,5 @@
 from flask import render_template, redirect, url_for, abort, flash, request,\
-    current_app
-from flask.helpers import make_response
+    current_app, make_response
 from flask_login import login_required, current_user
 from . import main
 from .forms import EditProfileForm, EditProfileAdminForm, PostForm
@@ -26,7 +25,7 @@ def index():
         query = current_user.followed_posts
     else:
         query = Post.query
-    pagination = Post.query.order_by(Post.timestamp.desc()).paginate(
+    pagination = query.order_by(Post.timestamp.desc()).paginate(
         page, per_page=current_app.config['FLASKY_POSTS_PER_PAGE'],
         error_out=False)
     posts = pagination.items
@@ -183,11 +182,12 @@ def followed_by(username):
                            endpoint='.followed_by', pagination=pagination,
                            follows=follows)
 
+
 @main.route('/all')
 @login_required
 def show_all():
     resp = make_response(redirect(url_for('.index')))
-    resp.set_cookie('show_followed', '', max_age=30*24*60*60) # 30 dias
+    resp.set_cookie('show_followed', '', max_age=30*24*60*60)
     return resp
 
 
@@ -195,5 +195,5 @@ def show_all():
 @login_required
 def show_followed():
     resp = make_response(redirect(url_for('.index')))
-    resp.set_cookie('show_followed', '1', max_age=30*24*60*60) # 30 dias
+    resp.set_cookie('show_followed', '1', max_age=30*24*60*60)
     return resp
