@@ -89,7 +89,7 @@ class Db:
 
 db_name = 'data-dev.sqlite'
 table_list = ('users', 'roles', 'posts')
-table_name = table_list[2]
+table_name = table_list[0]
 my_db = Db(db_name)
 
 # my_db.drop_table()
